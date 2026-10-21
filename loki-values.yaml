@@ -1,0 +1,72 @@
+# Run Loki as one single process (simplest mode, fine for a POC)
+deploymentMode: SingleBinary
+
+loki:
+  # Multi-tenant: every request must say which tenant it belongs to
+  # using the X-Scope-OrgID header
+  auth_enabled: true
+
+  commonConfig:
+    replication_factor: 1   # only one copy, we have one node
+
+  # How Loki lays out its index and chunks in storage
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  storage:
+    type: s3
+    bucketNames:
+      chunks: loki-chunks
+      ruler: loki-ruler
+    s3:
+      # Floci's IP as seen from inside the cluster (pods can't resolve "floci")
+      endpoint: http://10.0.0.2:4566
+      region: us-east-1
+      # Dummy credentials - Floci accepts anything
+      accessKeyId: test
+      secretAccessKey: test
+      # Use http://host/bucket instead of http://bucket.host
+      s3ForcePathStyle: true
+      insecure: true
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false
+
+
+  # Without a disk, give Loki a temporary folder to write to
+  extraVolumes:
+    - name: data
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: data
+      mountPath: /var/loki
+
+
+# Turn off the components used by the other deployment modes
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Turn off extras we don't need on a small laptop cluster
+gateway:
+  enabled: false
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+lokiCanary:
+  enabled: false
+test:
+  enabled: false

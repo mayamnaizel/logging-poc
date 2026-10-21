@@ -1,0 +1,5 @@
+*.kubeconfig
+kubeconfig*
+logging-poc.yaml
+k3s.yaml
+.env

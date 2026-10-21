@@ -1,0 +1,32 @@
+# Grafana: the web UI where we search and view logs.
+# No admin password here - the chart generates a random one and stores
+# it in a Kubernetes Secret, so it never ends up in Git.
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      # One data source per tenant. The X-Scope-OrgID header tells Loki
+      # which tenant's logs to return.
+      - name: Loki (team-a)
+        type: loki
+        uid: loki-team-a
+        url: http://loki.loki.svc.cluster.local:3100
+        isDefault: true
+        jsonData:
+          httpHeaderName1: X-Scope-OrgID
+        secureJsonData:
+          httpHeaderValue1: team-a
+
+      - name: Loki (team-b)
+        type: loki
+        uid: loki-team-b
+        url: http://loki.loki.svc.cluster.local:3100
+        jsonData:
+          httpHeaderName1: X-Scope-OrgID
+        secureJsonData:
+          httpHeaderValue1: team-b
+
+# No disk needed for the POC (the cluster has no StorageClass anyway)
+persistence:
+  enabled: false
